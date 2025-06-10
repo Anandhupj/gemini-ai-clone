@@ -1,108 +1,46 @@
-// index.js
-import { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold } from "@google/generative-ai";
-import dotenv from 'dotenv';
+// gemini.js or index.js
+import { GoogleGenerativeAI } from "@google/generative-ai"; // Note: use @google/generative-ai NOT @google/genai
+import dotenv from "dotenv";
 
-dotenv.config(); // Load environment variables from .env file
+// If you're using a Node.js backend, enable dotenv
+// dotenv.config();
 
-const API_KEY = process.env.API_KEY;
+// Vite or frontend: use import.meta.env
+const API_KEY = import.meta.env.VITE_API_KEY;
+
 if (!API_KEY) {
-    console.error("Error: API_KEY not found. Make sure it's set in your .env file.");
-    process.exit(1);
+  console.error("Error: API_KEY not found. Make sure it's set in your .env file.");
+  throw new Error("Missing API_KEY");
 }
 
 const genAI = new GoogleGenerativeAI(API_KEY);
 
-async function runSimpleText() {
-    console.log("--- Running Simple Text Generation ---");
-    try {
-        // For text-only input, use the gemini-pro model
-        const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+// 🔁 Updated version of runSimpleText() using gemini-2.0-flash
+async function runSimpleText(prompt) {
+  console.log("--- Running Simple Text Generation ---");
+  try {
+    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
 
-        const prompt = "Write a short story about a friendly robot exploring a new planet.";
+    const result = await model.generateContent({
+      contents: [{ role: "user", parts: [{ text: prompt }] }],
+    });
 
-        const result = await model.generateContent(prompt);
-        const response = result.response;
-        const text = response.text();
-        console.log("Generated Text:\n", text);
-    } catch (error) {
-        console.error("Error generating content:", error);
-    }
-    console.log("-------------------------------------\n");
+    const text = result.response.text();
+    // console.log("Generated Text:\n", text);
+     return text;
+  } catch (error) {
+    console.error("Error generating content:", error);
+     return "Error: Could not generate text.";
+  }
+//   console.log("-------------------------------------\n");
 }
 
-async function runStreamingChat() {
-    console.log("--- Running Streaming Chat ---");
-    try {
-        const model = genAI.getGenerativeModel({ model: "gemini-pro" });
-        const chat = model.startChat({
-            history: [
-                {
-                    role: "user",
-                    parts: [{ text: "Hello, I have 2 dogs in my house." }],
-                },
-                {
-                    role: "model",
-                    parts: [{ text: "Great to meet you. What would you like to know?" }],
-                },
-            ],
-            generationConfig: {
-                maxOutputTokens: 200,
-            },
-            // Safety settings are important to configure
-            safetySettings: [
-                {
-                    category: HarmCategory.HARM_CATEGORY_HARASSMENT,
-                    threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
-                },
-                {
-                    category: HarmCategory.HARM_CATEGORY_HATE_SPEECH,
-                    threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
-                },
-            ],
-        });
+// Leave runStreamingChat() out if it's not supported for this model
 
-        const msg = "How many paws are in my house?";
-        console.log(`User: ${msg}`);
-
-        const result = await chat.sendMessageStream(msg);
-        let text = "";
-        console.log("Model (streaming):");
-        for await (const chunk of result.stream) {
-            const chunkText = chunk.text();
-            process.stdout.write(chunkText); // Print chunk without newline
-            text += chunkText;
-        }
-        process.stdout.write("\n"); // Add a final newline
-
-        // console.log("\nFull Model Response (after streaming):\n", text);
-
-        // You can continue the chat
-        const nextMsg = "What about if one dog visits a friend?";
-        console.log(`\nUser: ${nextMsg}`);
-        const nextResult = await chat.sendMessageStream(nextMsg);
-        let nextText = "";
-        console.log("Model (streaming):");
-        for await (const chunk of nextResult.stream) {
-            const chunkText = chunk.text();
-            process.stdout.write(chunkText);
-            nextText += chunkText;
-        }
-        process.stdout.write("\n");
-
-    } catch (error) {
-        console.error("Error in chat:", error);
-    }
-    console.log("----------------------------\n");
+async function runChat(prompt) {
+ const text = await runSimpleText(prompt); // ✅ get returned value
+  return text;
+  // await runStreamingChat(); // Optionally comment this if using a model that doesn’t support streaming
 }
 
-async function main() {
-    await runSimpleText();
-    await runStreamingChat();
-    // You can also add vision examples if needed (gemini-pro-vision)
-}
-
- main();
-
- 
-
-// const apiKey = "AIzaSyBbRp61TgrvR0x903Vlfa88qsQzQCnFX3o"
+export default runChat;
