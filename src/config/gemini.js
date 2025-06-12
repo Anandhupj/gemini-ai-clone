@@ -15,7 +15,7 @@ if (!API_KEY) {
 
 const genAI = new GoogleGenerativeAI(API_KEY);
 
-// 🔁 Updated version of runSimpleText() using gemini-2.0-flash
+//  Updated version of runSimpleText() using gemini-2.0-flash
 async function runSimpleText(prompt) {
   console.log("--- Running Simple Text Generation ---");
   try {
@@ -26,7 +26,7 @@ async function runSimpleText(prompt) {
     });
 
     const text = result.response.text();
-    // console.log("Generated Text:\n", text);
+    console.log("Generated Text:\n", text);
      return text;
   } catch (error) {
     console.error("Error generating content:", error);
@@ -38,7 +38,7 @@ async function runSimpleText(prompt) {
 // Leave runStreamingChat() out if it's not supported for this model
 
 async function runChat(prompt) {
- const text = await runSimpleText(prompt); // ✅ get returned value
+ const text = await runSimpleText(prompt); //get returned value
   return text;
   // await runStreamingChat(); // Optionally comment this if using a model that doesn’t support streaming
 }
